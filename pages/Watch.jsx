@@ -1,17 +1,125 @@
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
 
 export const Watch = () => {
   const { id } = useParams();
+  const [videoData, setVideoData] = useState(null);
+  const [relatedVideos, setRelatedVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+       
+        const videoRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${id}&key=${import.meta.env.VITE_RAPID_API_KEY}`
+        );
+        const videoJson = await videoRes.json();
+
+        if (videoJson.items?.length > 0) {
+          setVideoData(videoJson.items[0]);
+        }
+
+        
+        const relatedRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=${id}&type=video&maxResults=6&key=${import.meta.env.VITE_RAPID_API_KEY}`
+        );
+
+        const relatedJson = await relatedRes.json();
+
+        if (relatedJson.items) {
+          setRelatedVideos(relatedJson.items);
+        }
+
+      } catch (error) {
+        console.error("Error fetching watch data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-10">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!videoData) {
+    return (
+      <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        Video not found
+      </div>
+    );
+  }
+
+  const { snippet, statistics } = videoData;
 
   return (
-    <div className="flex justify-center">
-      <iframe
-        width="800"
-        height="450"
-        src={`https://www.youtube.com/embed/${id}`}
-        title="YouTube video player"
-        allowFullScreen
-      ></iframe>
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+        
+        <div className="lg:col-span-2">
+
+          <div className="aspect-video w-full rounded-xl overflow-hidden border border-gray-800">
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${id}`}
+              title={snippet.title}
+              allowFullScreen
+            ></iframe>
+          </div>
+
+          <h1 className="text-2xl font-semibold mt-6">
+            {snippet.title}
+          </h1>
+
+          <p className="text-sm text-gray-400 mt-2">
+            {Number(statistics.viewCount).toLocaleString()} views •{" "}
+            {new Date(snippet.publishedAt).toLocaleDateString()}
+          </p>
+
+          <div className="mt-6 bg-gray-900 p-5 rounded-xl text-sm text-gray-300 whitespace-pre-line border border-gray-800">
+            {snippet.description}
+          </div>
+        </div>
+
+        
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Related Videos</h2>
+
+          {relatedVideos.map((video) => (
+            <Link
+              key={video.id.videoId}
+              to={`/watch/${video.id.videoId}`}
+              className="flex gap-4 bg-gray-900 p-3 rounded-lg hover:bg-gray-800 transition"
+            >
+              <img
+                src={video.snippet.thumbnails.medium.url}
+                alt={video.snippet.title}
+                className="w-32 h-20 object-cover rounded-md"
+              />
+
+              <div>
+                <p className="text-sm font-medium line-clamp-2">
+                  {video.snippet.title}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {video.snippet.channelTitle}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+      </div>
     </div>
   );
 };
+
+
