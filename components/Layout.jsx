@@ -1,21 +1,20 @@
-import Navbar from "./Navbar"
-import Sidebar from "./Sidebar"
-import styles from "./Layout.module.css"
+import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
 
-function Layout({ children }) {
+const Layout = ({ children }) => {
   return (
-    <div className={styles.container}>
+    <div className="flex flex-col h-screen bg-gray-900 text-white">
       <Navbar />
 
-      <div className={styles.main}>
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
-        <div className={styles.content}>
+        <main className="flex-1 overflow-y-auto p-6">
           {children}
-        </div>
+        </main>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Layout
+export default Layout;

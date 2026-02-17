@@ -1,7 +1,8 @@
-import React from 'react'
-
 export const Profile = () => {
-  return (
-    <div>Profile</div>
-  )
-}
+    return (
+      <div>
+        <h1 className="text-3xl font-bold">Profile Page</h1>
+      </div>
+    );
+  };
+  
