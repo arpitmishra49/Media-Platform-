@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import VideoCard from "../components/VideoCard";
 import ShimmerCard from "../components/ShimmerCard";
 
 const Home = () => {
@@ -10,15 +10,18 @@ const Home = () => {
     const fetchVideos = async () => {
       try {
         const res = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=react&type=video&key=${import.meta.env.VITE_RAPID_API_KEY}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=react&type=video&key=${import.meta.env.VITE_RAPID_API_KEY}`
         );
+
         const data = await res.json();
 
         if (data.items) {
           setVideos(data.items);
+        } else {
+          console.error("API error:", data);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Fetch error:", error);
       } finally {
         setLoading(false);
       }
@@ -28,30 +31,21 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <div className="min-h-screen">
       
-      {loading
-        ? Array.from({ length: 9 }).map((_, index) => (
-            <ShimmerCard key={index} />
-          ))
-        : videos.map((video) => (
-            <Link
-              key={video.id.videoId}
-              to={`/watch/${video.id.videoId}`}
-              className="bg-gray-800 rounded-xl overflow-hidden hover:scale-105 transition"
-            >
-              <img
-                src={video.snippet.thumbnails.medium.url}
-                alt={video.snippet.title}
-                className="w-full"
-              />
-              <div className="p-4">
-                <h2 className="text-sm font-semibold">
-                  {video.snippet.title}
-                </h2>
-              </div>
-            </Link>
-          ))}
+      <h1 className="text-3xl font-bold mb-8 text-indigo-600">
+        Explore Videos
+      </h1>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        {loading
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <ShimmerCard key={i} />
+            ))
+          : videos.map((video) => (
+              <VideoCard key={video.id.videoId} video={video} />
+            ))}
+      </div>
     </div>
   );
 };
