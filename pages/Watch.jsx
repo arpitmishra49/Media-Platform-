@@ -1,34 +1,76 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 
 export const Watch = () => {
   const { id } = useParams();
+
   const [videoData, setVideoData] = useState(null);
   const [relatedVideos, setRelatedVideos] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  
+  const videoCache = useRef({});
+  const channelCache = useRef({});
+
   useEffect(() => {
     const fetchData = async () => {
-      try {
-       
-        const videoRes = await fetch(
-          `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${id}&key=${import.meta.env.VITE_RAPID_API_KEY}`
-        );
-        const videoJson = await videoRes.json();
+      setLoading(true);
 
-        if (videoJson.items?.length > 0) {
-          setVideoData(videoJson.items[0]);
+      try {
+        
+        if (videoCache.current[id]) {
+          const cachedVideo = videoCache.current[id];
+          setVideoData(cachedVideo);
+
+          const channelId = cachedVideo.snippet.channelId;
+
+          
+          if (channelCache.current[channelId]) {
+            setRelatedVideos(channelCache.current[channelId]);
+            setLoading(false);
+            return;
+          }
         }
 
         
-        const relatedRes = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId=${id}&type=video&maxResults=6&key=${import.meta.env.VITE_RAPID_API_KEY}`
+        const videoRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${id}&key=${import.meta.env.VITE_RAPID_API_KEY}`
         );
 
-        const relatedJson = await relatedRes.json();
+        const videoJson = await videoRes.json();
 
-        if (relatedJson.items) {
-          setRelatedVideos(relatedJson.items);
+        if (!videoJson.items?.length) {
+          setLoading(false);
+          return;
+        }
+
+        const video = videoJson.items[0];
+
+       
+        videoCache.current[id] = video;
+
+        setVideoData(video);
+
+        const channelId = video.snippet.channelId;
+
+        
+        if (!channelCache.current[channelId]) {
+          const relatedRes = await fetch(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=${channelId}&maxResults=8&key=${import.meta.env.VITE_RAPID_API_KEY}`
+          );
+
+          const relatedJson = await relatedRes.json();
+
+          if (relatedJson.items) {
+            const filtered = relatedJson.items.filter(
+              (item) => item.id.videoId !== id
+            );
+
+            channelCache.current[channelId] = filtered;
+            setRelatedVideos(filtered);
+          }
+        } else {
+          setRelatedVideos(channelCache.current[channelId]);
         }
 
       } catch (error) {
@@ -43,7 +85,7 @@ export const Watch = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white p-10">
+      <div className="min-h-screen bg-black text-white flex justify-center items-center">
         Loading...
       </div>
     );
@@ -65,14 +107,13 @@ export const Watch = () => {
 
         
         <div className="lg:col-span-2">
-
           <div className="aspect-video w-full rounded-xl overflow-hidden border border-gray-800">
             <iframe
               className="w-full h-full"
               src={`https://www.youtube.com/embed/${id}`}
               title={snippet.title}
               allowFullScreen
-            ></iframe>
+            />
           </div>
 
           <h1 className="text-2xl font-semibold mt-6">
@@ -91,7 +132,7 @@ export const Watch = () => {
 
         
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Related Videos</h2>
+          <h2 className="text-lg font-semibold">More from this Channel</h2>
 
           {relatedVideos.map((video) => (
             <Link
@@ -104,7 +145,6 @@ export const Watch = () => {
                 alt={video.snippet.title}
                 className="w-32 h-20 object-cover rounded-md"
               />
-
               <div>
                 <p className="text-sm font-medium line-clamp-2">
                   {video.snippet.title}
@@ -121,5 +161,3 @@ export const Watch = () => {
     </div>
   );
 };
-
-
