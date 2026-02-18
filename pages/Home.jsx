@@ -5,7 +5,7 @@ import ShimmerCard from "../components/ShimmerCard";
 
 const Home = () => {
   const [videos, setVideos] = useState([]);
-  const [tokens, setTokens] = useState([""]); // page 1 token
+  const [tokens, setTokens] = useState([""]); 
   const [loading, setLoading] = useState(false);
 
   const [searchParams] = useSearchParams();
@@ -29,7 +29,7 @@ const Home = () => {
         setVideos(data.items);
       }
 
-      // Store nextPageToken safely
+      
       if (data.nextPageToken) {
         setTokens((prev) => {
           if (!prev[pageNumber]) {
@@ -63,7 +63,7 @@ const Home = () => {
         Trending Videos
       </h1>
 
-      {/* Video Grid */}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (
@@ -80,7 +80,7 @@ const Home = () => {
             ))}
       </div>
 
-      {/* Pagination Controls */}
+      
       <div className="flex justify-center gap-4 mt-12">
 
         <button
