@@ -6,6 +6,7 @@ import Search from './pages/search.jsx';
 import { Upload } from './pages/Upload.jsx';
 import { Watch } from './pages/Watch.jsx';
 import { Routes, Route } from "react-router-dom";
+import WatchHistory from './pages/WatchHistory.jsx';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/upload" element={<Upload />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/history" element={<WatchHistory />} />
       </Routes>
     </Layout>
   );
