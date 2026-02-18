@@ -11,7 +11,7 @@ export const Watch = () => {
   const videoCache = useRef({});
   const channelCache = useRef({});
 
-  // ✅ Save to Watch History
+  
   const saveToHistory = (videoId) => {
     const existing =
       JSON.parse(localStorage.getItem("watchHistory")) || [];
@@ -19,7 +19,7 @@ export const Watch = () => {
     const updated = [
       videoId,
       ...existing.filter((vid) => vid !== videoId),
-    ].slice(0, 20); // keep only last 20
+    ].slice(0, 20); 
 
     localStorage.setItem("watchHistory", JSON.stringify(updated));
   };
@@ -29,7 +29,7 @@ export const Watch = () => {
       setLoading(true);
 
       try {
-        // ✅ Check video cache first
+       
         if (videoCache.current[id]) {
           const cachedVideo = videoCache.current[id];
           setVideoData(cachedVideo);
@@ -44,7 +44,7 @@ export const Watch = () => {
           }
         }
 
-        // ✅ Fetch video details
+        
         const videoRes = await fetch(
           `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${id}&key=${import.meta.env.VITE_RAPID_API_KEY}`
         );
@@ -61,12 +61,12 @@ export const Watch = () => {
         videoCache.current[id] = video;
         setVideoData(video);
 
-        // 🔥 Save history here
+       
         saveToHistory(id);
 
         const channelId = video.snippet.channelId;
 
-        // ✅ Fetch related (channel-based)
+       
         if (!channelCache.current[channelId]) {
           const relatedRes = await fetch(
             `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&channelId=${channelId}&maxResults=8&key=${import.meta.env.VITE_RAPID_API_KEY}`
@@ -118,7 +118,7 @@ export const Watch = () => {
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-        {/* LEFT SIDE */}
+        
         <div className="lg:col-span-2">
           <div className="aspect-video w-full rounded-xl overflow-hidden border border-gray-800">
             <iframe
@@ -143,7 +143,7 @@ export const Watch = () => {
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
+       
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">
             More from this Channel

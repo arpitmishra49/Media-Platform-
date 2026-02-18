@@ -5,7 +5,7 @@ import ShimmerCard from "../components/ShimmerCard";
 
 const Home = () => {
   const [videos, setVideos] = useState([]);
-  const [tokens, setTokens] = useState([""]); 
+  const [tokens, setTokens] = useState([""]); // page 1 token
   const [loading, setLoading] = useState(false);
 
   const [searchParams] = useSearchParams();
@@ -20,7 +20,7 @@ const Home = () => {
       const pageToken = tokens[pageNumber - 1] || "";
 
       const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=12&q=react&pageToken=${pageToken}&key=${import.meta.env.VITE_RAPID_API_KEY}`
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=IN&maxResults=12&pageToken=${pageToken}&key=${import.meta.env.VITE_RAPID_API_KEY}`
       );
 
       const data = await res.json();
@@ -29,7 +29,7 @@ const Home = () => {
         setVideos(data.items);
       }
 
-      
+      // Store nextPageToken safely
       if (data.nextPageToken) {
         setTokens((prev) => {
           if (!prev[pageNumber]) {
@@ -42,7 +42,7 @@ const Home = () => {
       }
 
     } catch (error) {
-      console.error("Pagination error:", error);
+      console.error("Home fetch error:", error);
     } finally {
       setLoading(false);
     }
@@ -60,21 +60,27 @@ const Home = () => {
     <div className="min-h-screen bg-black text-white px-6 py-10">
 
       <h1 className="text-3xl font-semibold mb-8">
-        Explore Videos
+        Trending Videos
       </h1>
 
-     
+      {/* Video Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (
               <ShimmerCard key={i} />
             ))
           : videos.map((video) => (
-              <VideoCard key={video.id.videoId} video={video} />
+              <VideoCard
+                key={video.id}
+                video={{
+                  id: { videoId: video.id },
+                  snippet: video.snippet,
+                }}
+              />
             ))}
       </div>
 
-      
+      {/* Pagination Controls */}
       <div className="flex justify-center gap-4 mt-12">
 
         <button

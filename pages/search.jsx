@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import VideoCard from "../components/VideoCard";
 import ShimmerCard from "../components/ShimmerCard";
 
@@ -9,34 +9,37 @@ const Search = () => {
   const [history, setHistory] = useState([]);
 
   
+  const searchCache = useRef({});
+
+  
+  const debounceRef = useRef(null);
+
   useEffect(() => {
-    const savedHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+    const savedHistory =
+      JSON.parse(localStorage.getItem("searchHistory")) || [];
     setHistory(savedHistory);
   }, []);
 
-  
   const saveToHistory = (searchTerm) => {
     if (!searchTerm.trim()) return;
 
     const updatedHistory = [
       searchTerm,
       ...history.filter((item) => item !== searchTerm),
-    ].slice(0, 8); 
+    ].slice(0, 8);
 
     setHistory(updatedHistory);
     localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
   };
 
-  const handleSearch = async (e, customQuery = null) => {
-    if (e) e.preventDefault();
-
-    const searchTerm = customQuery || query;
-
-    if (!searchTerm.trim()) return;
+  const performSearch = async (searchTerm) => {
+    
+    if (searchCache.current[searchTerm]) {
+      setVideos(searchCache.current[searchTerm]);
+      return;
+    }
 
     setLoading(true);
-    setQuery(searchTerm);
-    saveToHistory(searchTerm);
 
     try {
       const res = await fetch(
@@ -47,12 +50,36 @@ const Search = () => {
 
       if (data.items) {
         setVideos(data.items);
+
+        
+        searchCache.current[searchTerm] = data.items;
       }
+
     } catch (error) {
       console.error("Search error:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (e, customQuery = null) => {
+    if (e) e.preventDefault();
+
+    const searchTerm = customQuery || query;
+    if (!searchTerm.trim()) return;
+
+    setQuery(searchTerm);
+    saveToHistory(searchTerm);
+
+    
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    
+    debounceRef.current = setTimeout(() => {
+      performSearch(searchTerm);
+    }, 500);
   };
 
   const clearHistory = () => {
@@ -63,7 +90,7 @@ const Search = () => {
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
 
-      
+     
       <form onSubmit={handleSearch} className="flex justify-center mb-6">
         <div className="flex w-full max-w-2xl bg-gray-900 rounded-full overflow-hidden shadow-lg border border-gray-800">
           <input
