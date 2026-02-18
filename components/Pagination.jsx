@@ -1,49 +1,49 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
-const Pagination = ({ nextToken }) => {
-  const navigate = useNavigate();
+const Pagination = ({ hasNext }) => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const currentCursor = searchParams.get("cursor") || "";
+  const currentPage = Number(searchParams.get("page")) || 1;
 
-  const handleNext = () => {
-    if (nextToken) {
-      navigate(`/?cursor=${nextToken}`);
-    }
-  };
-
-  const handlePrevious = () => {
-    navigate(-1); // browser back (cursor-based history)
+  const goToPage = (pageNumber) => {
+    navigate(`/?page=${pageNumber}`);
   };
 
   return (
     <div className="flex justify-center items-center gap-6 mt-12">
 
-      {/* Previous Button */}
+      
       <button
-        onClick={handlePrevious}
-        disabled={!currentCursor}
-        className={`px-6 py-2 rounded-full transition ${
-          currentCursor
-            ? "bg-gray-800 hover:bg-gray-700"
-            : "bg-gray-700 text-gray-500 cursor-not-allowed"
+        disabled={currentPage === 1}
+        onClick={() => goToPage(currentPage - 1)}
+        className={`px-6 py-2 rounded-lg transition ${
+          currentPage === 1
+            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+            : "bg-gray-800 hover:bg-gray-700"
         }`}
       >
-        ← Previous
+        ← Prev
       </button>
 
-      {/* Next Button */}
+      
+      <div className="px-6 py-2 bg-indigo-600 rounded-lg font-medium">
+        Page {currentPage}
+      </div>
+
+      
       <button
-        onClick={handleNext}
-        disabled={!nextToken}
-        className={`px-6 py-2 rounded-full transition ${
-          nextToken
-            ? "bg-indigo-600 hover:bg-indigo-700"
-            : "bg-gray-700 text-gray-500 cursor-not-allowed"
+        disabled={!hasNext}
+        onClick={() => goToPage(currentPage + 1)}
+        className={`px-6 py-2 rounded-lg transition ${
+          !hasNext
+            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+            : "bg-gray-800 hover:bg-gray-700"
         }`}
       >
         Next →
       </button>
+
     </div>
   );
 };

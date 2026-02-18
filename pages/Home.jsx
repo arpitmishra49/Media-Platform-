@@ -1,52 +1,69 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import VideoCard from "../components/VideoCard";
 import ShimmerCard from "../components/ShimmerCard";
-import Pagination from "../components/Pagination";
 
 const Home = () => {
   const [videos, setVideos] = useState([]);
-  const [nextToken, setNextToken] = useState(null);
+  const [tokens, setTokens] = useState([""]); 
   const [loading, setLoading] = useState(false);
 
   const [searchParams] = useSearchParams();
-  const cursor = searchParams.get("cursor") || "";
+  const navigate = useNavigate();
+
+  const page = Number(searchParams.get("page")) || 1;
+
+  const fetchVideos = async (pageNumber) => {
+    setLoading(true);
+
+    try {
+      const pageToken = tokens[pageNumber - 1] || "";
+
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=12&q=react&pageToken=${pageToken}&key=${import.meta.env.VITE_RAPID_API_KEY}`
+      );
+
+      const data = await res.json();
+
+      if (data.items) {
+        setVideos(data.items);
+      }
+
+      // Store next token if new
+      if (data.nextPageToken) {
+        setTokens((prev) => {
+          if (!prev[pageNumber]) {
+            const newTokens = [...prev];
+            newTokens[pageNumber] = data.nextPageToken;
+            return newTokens;
+          }
+          return prev;
+        });
+      }
+
+    } catch (error) {
+      console.error("Pagination error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchVideos = async () => {
-      setLoading(true);
+    fetchVideos(page);
+  }, [page]);
 
-      try {
-        const res = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=12&q=react&pageToken=${cursor}&key=${import.meta.env.VITE_RAPID_API_KEY}`
-        );
-
-        const data = await res.json();
-
-        if (data.items) {
-          setVideos(data.items);
-          setNextToken(data.nextPageToken || null);
-        }
-
-      } catch (error) {
-        console.error("Cursor pagination error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVideos();
-  }, [cursor]);
+  const goToPage = (pageNumber) => {
+    navigate(`/?page=${pageNumber}`);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
 
-      
       <h1 className="text-3xl font-semibold mb-8">
         Explore Videos
       </h1>
 
-      
+     
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (
@@ -58,10 +75,37 @@ const Home = () => {
       </div>
 
       
-      {!loading && (
-        <Pagination nextToken={nextToken} />
-      )}
+      <div className="flex justify-center gap-4 mt-12">
 
+        <button
+          disabled={page === 1}
+          onClick={() => goToPage(page - 1)}
+          className={`px-6 py-2 rounded-lg ${
+            page === 1
+              ? "bg-gray-700 text-gray-500"
+              : "bg-gray-800 hover:bg-gray-700"
+          }`}
+        >
+          Prev
+        </button>
+
+        <span className="px-6 py-2 bg-indigo-600 rounded-lg">
+          Page {page}
+        </span>
+
+        <button
+          disabled={!tokens[page]}
+          onClick={() => goToPage(page + 1)}
+          className={`px-6 py-2 rounded-lg ${
+            !tokens[page]
+              ? "bg-gray-700 text-gray-500"
+              : "bg-gray-800 hover:bg-gray-700"
+          }`}
+        >
+          Next
+        </button>
+
+      </div>
     </div>
   );
 };
